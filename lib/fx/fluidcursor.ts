@@ -21,8 +21,11 @@ import { getTier, canHover } from './perf';
 
 // ---- Tunables (the "feel" of the fluid) -------------------------------------
 const CONFIG = {
-  SIM_RESOLUTION: 128,
-  DYE_RESOLUTION: 512,
+  // ponytail: dropped from 128/512 — dye is the full-screen texture, so 256
+  // quarters the per-frame fill cost; bilinear upsampling keeps it smooth.
+  // Bump back up if the trail looks too coarse on hi-dpi.
+  SIM_RESOLUTION: 64,
+  DYE_RESOLUTION: 256,
   DENSITY_DISSIPATION: 9.0,
   VELOCITY_DISSIPATION: 2.0,
   SPLAT_RADIUS: 0.05,
@@ -505,7 +508,8 @@ export function initFluidCursor(): () => void {
         sx = 0;
         sy = 0;
       }
-      const steps = dist > 0.2 ? 1 : Math.min(24, Math.max(1, Math.ceil(dist / 0.006)));
+      // ponytail: cap 24 -> 12; fast flicks splat half as often, ribbon still smooth.
+      const steps = dist > 0.2 ? 1 : Math.min(12, Math.max(1, Math.ceil(dist / 0.006)));
       for (let i = 1; i <= steps; i++) {
         const t = i / steps;
         // Push the dye OPPOSITE to the motion so the trail drags behind the

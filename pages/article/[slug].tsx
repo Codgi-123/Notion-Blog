@@ -77,7 +77,7 @@ export default function ArticlePage({
         </aside>
         <article className="article">
           <BackLink href="/" label="返回首页" />
-          <h1 className="post-title" data-split>{post.title}</h1>
+          <h1 className="post-title">{post.title}</h1>
         <div className="post-detail-meta">
           {post.date && <time>{formatDate(post.date)}</time>}
           {post.category && (

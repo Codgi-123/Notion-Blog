@@ -14,10 +14,7 @@ import { reducedMotion, finePointer } from './perf';
 
 const SCRAMBLE_CHARS = '!<>-_\\/[]{}—=+*^?#%@&';
 
-// Split one element into spans. Text-only elements (our headings) — we read the
-// textContent, so any inline markup inside [data-split] would be flattened; only
-// tag plain-text headings.
-function splitOne(el: HTMLElement, io: IntersectionObserver) {
+function splitOne(el: HTMLElement) {
   if (el.dataset.splitDone) return;
   el.dataset.splitDone = '1';
   const text = el.textContent || '';
@@ -35,48 +32,20 @@ function splitOne(el: HTMLElement, io: IntersectionObserver) {
     span.style.setProperty('--i', String(i++));
     el.appendChild(span);
   }
-  const rect = el.getBoundingClientRect();
-  if (rect.top < window.innerHeight && rect.bottom > 0) {
-    // Already in viewport. If a page transition is covering the screen, defer
-    // until it finishes so the animation plays in the revealed page, not under
-    // the overlay. Otherwise one rAF is enough to let the browser commit the
-    // opacity:0 state so the CSS transition actually fires.
-    if (document.documentElement.hasAttribute('data-transitioning')) {
-      document.addEventListener('fx-page-revealed', () => el.classList.add('is-split-in'), { once: true });
-    } else {
-      requestAnimationFrame(() => el.classList.add('is-split-in'));
-    }
-  } else {
-    io.observe(el);
-  }
+  requestAnimationFrame(() => el.classList.add('is-split-in'));
 }
 
 function initSplit(): () => void {
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          e.target.classList.add('is-split-in');
-          io.unobserve(e.target);
-        }
-      }
-    },
-    { threshold: 0.1 },
-  );
-
   const scan = () =>
     document
       .querySelectorAll<HTMLElement>('[data-split]:not([data-split-done])')
-      .forEach((el) => splitOne(el, io));
+      .forEach((el) => splitOne(el));
   scan();
 
   const mo = new MutationObserver(() => scan());
   mo.observe(document.body, { childList: true, subtree: true });
 
-  return () => {
-    io.disconnect();
-    mo.disconnect();
-  };
+  return () => mo.disconnect();
 }
 
 function initScramble(): () => void {

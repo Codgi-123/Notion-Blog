@@ -47,12 +47,21 @@ export function initScrollDrive(): () => void {
     requestAnimationFrame(() => {
       scheduled = false;
       scan();
+      lastY = NaN; // force one recompute so new nodes get positioned
     });
   });
   mo.observe(document.body, { childList: true, subtree: true });
 
+  // Skip the per-frame rect reads when nothing moved. window.scrollY changes on
+  // scroll; innerHeight on resize. Re-run once after a scan() too (new nodes).
+  let lastY = NaN;
+  let lastVh = NaN;
   const un = addTick(() => {
     const vh = window.innerHeight;
+    const y = window.scrollY;
+    if (y === lastY && vh === lastVh) return;
+    lastY = y;
+    lastVh = vh;
     const mid = vh / 2;
 
     for (const p of parallax) {
