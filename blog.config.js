@@ -68,13 +68,10 @@ module.exports = {
     about: 'About',     // home "关于我" section
   },
 
-  // Home-page special sections. Each is a single Notion row whose *body* is
-  // rendered into a section on the home page. Rows are matched by `type` first;
-  // if a row has no `type` yet, it's matched by a title keyword (so it works
-  // before you fill in the type). Body content comes from the row's page body.
+  // Home-page special sections. Only rows whose `type` exactly matches appear.
   homeSections: {
-    notice: { type: 'Notice', titles: ['公告', 'Notice', '通知'] },
-    about: { type: 'About', titles: ['关于我', '关于', 'About'] },
-    friends: { type: 'Friends', titles: ['友情链接', '友链', 'Friends', 'Links'] },
+    notice: { type: 'Notice' },
+    about: { type: 'About' },
+    friends: { type: 'Friends' },
   },
 };

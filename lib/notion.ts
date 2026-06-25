@@ -196,14 +196,8 @@ export async function getHomeSections(): Promise<HomeSections> {
   const rows = await getPublishedRows();
   const cfg = blogConfig.homeSections;
 
-  const pick = (def: { type: string; titles: string[] }): Post | null => {
-    const byType = rows.find((r) => r.type === def.type);
-    if (byType) return byType;
-    // Title fallback: match the keyword regardless of the row's type (so it works
-    // whether the row is untyped or tagged Menu/Page/etc.), but never hijack a
-    // real article.
-    return rows.find((r) => r.type !== T.post && def.titles.some((t) => r.title.includes(t))) ?? null;
-  };
+  const pick = (def: { type: string }): Post | null =>
+    rows.find((r) => r.type === def.type) ?? null;
 
   const build = async (meta: Post | null): Promise<HomeSection> =>
     meta ? { meta, blocks: await getBlocks(meta.id) } : { meta: null, blocks: [] };
@@ -285,14 +279,14 @@ export async function getMenus(): Promise<MenuItem[]> {
   // we use raw query order as the best proxy. To control nav order reliably,
   // add an `order` number property to your menu rows (see blogConfig.properties).
   const orderProp = blogConfig.properties.order;
-  const menuRows = rows.filter((r) => r.type === T.menu || r.type === T.subMenu);
+  const menuRows = rows.filter((r) => r.type === T.menu || r.type === T.subMenu || r.type === T.page);
   if (orderProp) {
     menuRows.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   }
   const menus: MenuItem[] = [];
 
   for (const row of menuRows) {
-    if (row.type === T.menu) {
+    if (row.type === T.menu || row.type === T.page) {
       menus.push({
         id: row.id,
         title: row.title,
