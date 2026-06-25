@@ -1,4 +1,5 @@
 import type { AppProps } from 'next/app';
+import { Analytics } from '@vercel/analytics/next';
 import dynamic from 'next/dynamic';
 import 'katex/dist/katex.min.css';
 import '../styles/globals.css';
@@ -15,6 +16,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <Component {...pageProps} />
       <PageTransition />
       <FxRoot />
+      <Analytics />
     </>
   );
 }
