@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "notion:schema": "tsx scripts/introspect.ts"
+    "notion:schema": "tsx scripts/introspect.ts",
+    "notion:bootstrap": "tsx scripts/bootstrap-notion.ts",
+    "notion:config": "tsx scripts/dump-config.ts"
   },
   "dependencies": {
     "@notionhq/client": "^2.2.15",

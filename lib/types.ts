@@ -20,19 +20,16 @@ export interface Post {
 }
 
 // Resolved site settings: blog.config.js defaults overridden by the Notion
-// Config row (CONFIG-TABLE). `raw` holds every enabled override verbatim.
+// Config row (CONFIG-TABLE).
 export interface SiteConfig {
   title: string;
   description: string;
   author: string;
   link: string;
-  lang: string;
   keywords: string | null;
   favicon: string | null;
   bio: string | null;
   globalCss: string | null;
-  globalJs: string | null;
-  raw: Record<string, string>;
 }
 
 // A navigation entry built from Menu/SubMenu rows.

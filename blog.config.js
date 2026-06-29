@@ -9,8 +9,6 @@ module.exports = {
   title: 'Codgi Blog',
   description: 'A blog powered by Notion + Next.js',
   author: 'Codgi',
-  // Site language (BCP-47). Overridable via the Notion Config row (LANG).
-  lang: 'zh-CN',
   // Your site's canonical URL (used for SEO / RSS later).
   link: 'https://example.com',
   // Posts per page on the index.

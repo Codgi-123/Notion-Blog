@@ -362,13 +362,10 @@ export async function getSiteConfig(): Promise<SiteConfig> {
     description: g('DESCRIPTION') ?? blogConfig.description,
     author: g('AUTHOR') ?? blogConfig.author,
     link: g('LINK') ?? blogConfig.link,
-    lang: g('LANG') ?? blogConfig.lang ?? 'zh-CN',
     keywords: g('KEYWORDS'),
     favicon: g('BLOG_FAVICON'),
     bio: g('BIO'),
     globalCss: g('GLOBAL_CSS'),
-    globalJs: g('GLOBAL_JS'),
-    raw,
   };
 }
 
