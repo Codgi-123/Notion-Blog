@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "notion:schema": "tsx scripts/introspect.ts",
     "notion:bootstrap": "tsx scripts/bootstrap-notion.ts",
+    "notion:find": "tsx scripts/find-db.ts",
     "notion:config": "tsx scripts/dump-config.ts"
   },
   "dependencies": {

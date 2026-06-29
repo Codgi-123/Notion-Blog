@@ -17,7 +17,8 @@
 | `blog.config.js` | 站点信息 + Notion 列名映射 |
 | `.env.local` | `NOTION_TOKEN`、`NOTION_DATABASE_ID`（不进 git） |
 | `lib/notion.ts` | Notion 数据层 |
-| `scripts/bootstrap-notion.ts` | **AI 用 API 一键创建整个数据库**（列、选项、示例文章、Config 行） |
+| `scripts/find-db.ts` | **AI 用 search API 自动定位数据库**并写回 `.env.local`（配合模板路径） |
+| `scripts/bootstrap-notion.ts` | 兜底：没有模板时，AI 用 API 从零创建整个数据库 |
 | `scripts/introspect.ts` | 打印数据库列名/类型，用来核对 |
 | `scripts/dump-config.ts` | 打印 CONFIG-TABLE 现状 |
 
@@ -28,7 +29,7 @@
 这三件 Notion/Vercel 的 API 都**无法**让 AI 代办（涉及账号身份与授权），其余全部由 AI 自动完成：
 
 1. **建 Notion 集成并复制密钥**（约 1 分钟）
-2. **新建一个 Notion 页面并把集成连接上去，把页面链接发给 AI**（约 30 秒）
+2. **点模板「Duplicate」复制数据库，并把集成连接到复制出的页面**（约 30 秒，无需复制 id）
 3. **用浏览器完成一次 Vercel 登录授权**（`vercel login`，约 30 秒）
 
 下面每一步 AI 都给出精确的链接和点击路径。
@@ -64,40 +65,42 @@ cp .env.local.example .env.local
 
 ---
 
-## 3. 【人类操作 ②】建一个父页面并连接集成
+## 3. 【人类操作 ②】复制模板并连接集成
 
-Notion API 只能访问**被显式授权**的页面，所以需要人类提供一个父页面。AI 把下面这段发给人类：
+数据库结构已经做成了 Notion 可复制模板，人类点一下就能把整个数据库（含列、Select 选项、示例文章、Config 行 + CONFIG-TABLE）复制进自己的工作区。AI 把下面这段发给人类：
 
-> 1. 在 Notion 里**新建一个空白 Page**（任意标题，比如「我的博客」）。这个页面只是用来放数据库的容器。
-> 2. 打开这个页面，点右上角 **「•••」→「+ Add connections」**（中文：连接）→ 搜索并选中你刚创建的集成 `myblog` → 确认。
-> 3. 复制这个页面的链接（页面右上角 **「Share」→「Copy link」**，或直接复制浏览器地址栏 URL），发给我。
+> 1. 打开模板链接并点右上角 **「Duplicate」**：
+>    **https://codgi.notion.site/129687f2b6dd8291997d0162228c2375**
+>    选择复制到你自己的工作区。
+> 2. 打开复制出来的页面，点右上角 **「•••」→「+ Add connections」**（中文：连接）→ 选中你在上一步创建的集成 `myblog` → 确认。
+> 3. 告诉我已经完成（**不用复制任何 id**，下一步我自动定位）。
 
-> ⚠️ 第 2 步（连接集成）最容易漏。不连接的话 API 会报 403 / `object_not_found`。
+> ⚠️ 第 2 步（连接集成）最容易漏，且任何方式都绕不开——授权是按工作区授予的，模板带不过来。不连接的话 API 会报 403 / `object_not_found`。
 
 ---
 
-## 4. 【AI 操作】用 API 自动创建整个数据库
+## 4. 【AI 操作】自动定位数据库
 
-拿到父页面链接后，一条命令把数据库、所有列、Select 选项、2 篇示例文章、Config 行（含 CONFIG-TABLE 配置表）全部建好：
+人类连好集成后，一条命令用 search API 找到那个数据库并把 id 写进 `.env.local`，**无需人类手动复制 id**：
 
 ```bash
-npm run notion:bootstrap -- "<人类给的页面链接或URL>"
+npm run notion:find
 ```
 
-脚本会：
-- 按 `blog.config.js` 的列名映射创建数据库的全部列（`title` / `slug` / `status` / `summary` / `tags` / `category` / `date` / `type` / `icon` / `order`）和 Select 选项；
-- 建 2 篇 `status=Published` 的示例文章；
-- 建 `type=Config` 行 + 内嵌 CONFIG-TABLE，并写入 8 个站点配置项（TITLE/DESCRIPTION/AUTHOR 等，附带说明备注）；
-- 把新数据库的 id **自动写回 `.env.local` 的 `NOTION_DATABASE_ID`**。
-
-完成后核对一下结构无误：
+它会跳过同时被搜到的 CONFIG-TABLE 子库，只认带 `type`/`status` 列的主博客库。然后核对结构：
 
 ```bash
 npm run notion:schema   # 打印列名/类型
 npm run notion:config   # 打印 CONFIG-TABLE 现状
 ```
 
-> 如果人类坚持用自己**已有**的数据库（而非脚本新建的），改走老路：让他保证列名与 `blog.config.js` 的 `properties` 对齐，把数据库 id 填进 `.env.local`，再用 `npm run notion:schema` 核对、必要时改 `blog.config.js`。
+> **没有模板 / 模板失效时的兜底**：让人类只做「建一个空白页面 + 连接集成 + 发页面链接」，AI 用 API 从零建库：
+> ```bash
+> npm run notion:bootstrap -- "<页面链接或URL>"
+> ```
+> 该脚本按 `blog.config.js` 的列名创建全部列 + Select 选项 + 2 篇示例文章 + Config 行/CONFIG-TABLE，并自动写回 `NOTION_DATABASE_ID`。
+>
+> 如果人类要用自己**已有**的数据库：保证列名与 `blog.config.js` 的 `properties` 对齐，跑 `npm run notion:find`（或手填 id），再 `npm run notion:schema` 核对、必要时改 `blog.config.js`。
 
 顺手改 `blog.config.js` 顶部站点信息：`title` / `description` / `author` / `link`（`link` 先填占位，部署后回来改）。
 
@@ -161,8 +164,8 @@ AI 运行 `npx vercel login` 后，把下面这段发给人类：
 
 1. `node -v` 确认 18+，`npm install`。
 2. 【人类①】建 Notion 集成 → 拿 `NOTION_TOKEN`。`cp .env.local.example .env.local` 填进去。
-3. 【人类②】建父页面 + **连接集成** → 把页面链接给 AI。
-4. `npm run notion:bootstrap -- "<页面链接>"`（自动建库 + 写 `NOTION_DATABASE_ID`）→ `npm run notion:schema` / `notion:config` 核对。
+3. 【人类②】点模板 **Duplicate** 复制数据库 + **连接集成**（无需复制 id）。
+4. `npm run notion:find`（自动定位库 + 写 `NOTION_DATABASE_ID`）→ `npm run notion:schema` / `notion:config` 核对。兜底用 `npm run notion:bootstrap`。
 5. `npm run dev` 验证首页有文章。
 6. `npx vercel login`（【人类③】浏览器确认）→ `vercel link` → `vercel env add` ×2 → `npx vercel --prod`。
 7. 把上线域名写回 `blog.config.js` 的 `link`。
