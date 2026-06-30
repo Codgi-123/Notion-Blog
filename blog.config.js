@@ -19,6 +19,10 @@ module.exports = {
   // URL prefix for articles (notion-next uses /article/[slug]).
   articlePrefix: 'article',
 
+  // Home-page hero headline (two lines) and the "EST. <year>" founding year.
+  hero: { line1: 'Thoughts,', line2: 'crafted.' },
+  since: 2024,
+
   // Map logical fields -> your Notion property names.
   properties: {
     title: 'title',       // title property (type: title)

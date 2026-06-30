@@ -63,25 +63,46 @@ export function ArticleToc({ blocks }: { blocks: BlockWithChildren[] }) {
   useEffect(() => {
     if (items.length < 2) return;
     const ids = items.map((i) => i.id);
+    // Cache each heading's document offset. getBoundingClientRect forces a
+    // synchronous reflow, so measuring every heading per scroll frame thrashes
+    // layout; instead measure once (and on resize) and compare against scrollY.
+    let tops: { id: string; top: number }[] = [];
+    const measure = () => {
+      tops = ids
+        .map((id) => {
+          const el = document.getElementById(id);
+          return el ? { id, top: el.getBoundingClientRect().top + window.scrollY } : null;
+        })
+        .filter((t): t is { id: string; top: number } => t != null);
+    };
     let raf = 0;
     const update = () => {
       raf = 0;
-      let current = ids[0];
-      for (const id of ids) {
-        const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect().top <= 120) current = id;
+      let current = tops.length ? tops[0].id : ids[0];
+      // A heading is "passed" once its top crosses 120px below the viewport top.
+      for (const { id, top } of tops) {
+        if (top - window.scrollY <= 120) current = id;
       }
       setActiveId(current);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
     };
+    const onResize = () => {
+      measure();
+      onScroll();
+    };
+    measure();
     update();
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll, { passive: true });
+    window.addEventListener('resize', onResize, { passive: true });
+    // Heading positions shift as async content (images, fonts) settles.
+    const ro = new ResizeObserver(onResize);
+    ro.observe(document.body);
     return () => {
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
+      window.removeEventListener('resize', onResize);
+      ro.disconnect();
       if (raf) cancelAnimationFrame(raf);
     };
   }, [items]);

@@ -6,17 +6,27 @@ export function ReadingProgress() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Cache the scroll limit: reading scrollHeight forces a synchronous reflow,
+    // so doing it per scroll event (i.e. every frame under smooth scroll) causes
+    // layout thrashing. Recompute only when the document can actually resize.
+    let max = document.documentElement.scrollHeight - window.innerHeight;
+    const recompute = () => {
+      max = document.documentElement.scrollHeight - window.innerHeight;
+      onScroll();
+    };
     const onScroll = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
       const p = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
       if (ref.current) ref.current.style.transform = `scaleX(${p})`;
     };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll, { passive: true });
+    window.addEventListener('resize', recompute, { passive: true });
+    const ro = new ResizeObserver(recompute);
+    ro.observe(document.body);
     return () => {
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
+      window.removeEventListener('resize', recompute);
+      ro.disconnect();
     };
   }, []);
 
