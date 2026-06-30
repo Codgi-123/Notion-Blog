@@ -145,10 +145,10 @@ export async function getPublishedRows(): Promise<Post[]> {
     cursor = res.has_more ? (res.next_cursor ?? undefined) : undefined;
   } while (cursor);
 
-  // Reorder to match the database view's manual drag-sort (read via the private
-  // API in notionOrder; falls back to this query order if unavailable). Menus
+  // Reorder to match the database view's manual drag-sort, captured at build
+  // time into menu-order.json (see notionOrder / scripts/snapshot-order). Menus
   // depend on this order; date-sorted lists re-sort anyway.
-  const ordered = sortByViewOrder(rows, await getViewOrder(databaseId));
+  const ordered = sortByViewOrder(rows, getViewOrder());
   return ordered.filter(isPublished);
 }
 

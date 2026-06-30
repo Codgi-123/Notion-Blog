@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "tsx scripts/snapshot-order.ts",
     "build": "next build",
+    "snapshot:order": "tsx scripts/snapshot-order.ts",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
