@@ -42,7 +42,25 @@ export async function getViewOrder(databaseId: string): Promise<string[]> {
   return inflight;
 }
 
+// Retry transient failures AND empty reads. Under ISR each page (re)generates
+// independently, so a single flaky notion.so read would otherwise leave just
+// that page on the stale fallback order — permanently out of sync with the rest
+// until its next revalidate. A few quick retries make divergence very unlikely.
 async function fetchOrder(databaseId: string): Promise<string[]> {
+  const ATTEMPTS = 3;
+  for (let i = 0; i < ATTEMPTS; i++) {
+    try {
+      const ids = await fetchOrderOnce(databaseId);
+      if (ids.length) return ids;
+    } catch (e) {
+      if (i === ATTEMPTS - 1) throw e;
+    }
+    await new Promise((r) => setTimeout(r, 300 * (i + 1)));
+  }
+  return []; // published-but-empty parse; caller logs and falls back
+}
+
+async function fetchOrderOnce(databaseId: string): Promise<string[]> {
   const api = new NotionAPI(authToken ? { authToken, activeUser } : {});
   const recordMap: any = await api.getPage(databaseId);
   const cq = recordMap?.collection_query ?? {};
