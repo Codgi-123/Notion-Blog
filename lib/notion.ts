@@ -5,6 +5,7 @@ import type {
 } from '@notionhq/client/build/src/api-endpoints';
 import blogConfig from '../blog.config';
 import type { Post, MenuItem, SiteConfig, BlockWithChildren } from './types';
+import { getViewOrder, sortByViewOrder } from './notionOrder';
 
 const token = process.env.NOTION_TOKEN;
 const databaseId = process.env.NOTION_DATABASE_ID;
@@ -116,10 +117,10 @@ function isPublished(post: Post): boolean {
 const T = blogConfig.types;
 
 /**
- * All published rows in database order. This is the single source of truth;
- * the typed accessors below filter/sort it. Order is the Notion API's default
- * query order — used as-is for menus (see getMenus). NOTE: the official API
- * cannot read a view's manual drag-sort, so explicit ordering relies on `date`.
+ * All published rows in the database view's manual drag-sort order (see
+ * notionOrder.getViewOrder; falls back to the official API's query order when
+ * the private API is unavailable). The single source of truth — the typed
+ * accessors below filter/re-sort it; menus consume this order directly.
  */
 export async function getPublishedRows(): Promise<Post[]> {
   if (!token || !databaseId) {
@@ -144,7 +145,11 @@ export async function getPublishedRows(): Promise<Post[]> {
     cursor = res.has_more ? (res.next_cursor ?? undefined) : undefined;
   } while (cursor);
 
-  return rows.filter(isPublished);
+  // Reorder to match the database view's manual drag-sort (read via the private
+  // API in notionOrder; falls back to this query order if unavailable). Menus
+  // depend on this order; date-sorted lists re-sort anyway.
+  const ordered = sortByViewOrder(rows, await getViewOrder(databaseId));
+  return ordered.filter(isPublished);
 }
 
 /** A slug usable as a clean internal URL (non-empty, not an external link). */
@@ -274,10 +279,9 @@ function resolveHref(slug: string): string {
  */
 export async function getMenus(): Promise<MenuItem[]> {
   const rows = await getPublishedRows();
-  // notion-next relies on drag-order (from the unofficial API) to group each
-  // SubMenu under the Menu above it. The official API can't read that order, so
-  // we use raw query order as the best proxy. To control nav order reliably,
-  // add an `order` number property to your menu rows (see blogConfig.properties).
+  // Rows arrive in the view's manual drag-sort order (getPublishedRows), so each
+  // SubMenu lands right after its intended parent — matching what you see in
+  // Notion. An `order` number property, if set, still overrides as a tie-break.
   const orderProp = blogConfig.properties.order;
   const menuRows = rows.filter((r) => r.type === T.menu || r.type === T.subMenu || r.type === T.page);
   if (orderProp) {

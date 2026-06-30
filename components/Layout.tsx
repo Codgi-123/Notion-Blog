@@ -242,11 +242,6 @@ export function Layout({
       <footer className="site-footer">
         <span suppressHydrationWarning>© {new Date().getFullYear()} {author}</span>
         <div className="footer-links">
-          {site?.link && (
-            <a href={site.link} className="footer-link" target="_blank" rel="noreferrer">
-              Site
-            </a>
-          )}
           <span className="footer-link footer-muted">Powered by Notion</span>
         </div>
       </footer>
