@@ -15,6 +15,8 @@ const ROWS: { key: string; value: string | null; enabled: boolean | null; note: 
   { key: 'BLOG_FAVICON', value: '', enabled: false, note: '站点 favicon 的图片 URL。不启用则用内置默认图标。' },
   { key: 'BIO', value: '', enabled: false, note: '首页 hero 区的副标题。不启用则回退到 DESCRIPTION。' },
   { key: 'GLOBAL_CSS', value: '', enabled: false, note: '自定义全局 CSS，原样注入到每个页面的 <style>。' },
+  { key: 'HERO_LINE1', value: 'Thoughts,', enabled: true, note: '首页 hero 大标题第一行。不启用则用 blog.config.js 默认值。' },
+  { key: 'HERO_LINE2', value: 'crafted.', enabled: true, note: '首页 hero 大标题第二行（斜体）。不启用则用 blog.config.js 默认值。' },
 ];
 
 async function main() {

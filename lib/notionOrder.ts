@@ -14,17 +14,32 @@ const activeUser = process.env.NOTION_ACTIVE_USER; // only needed for some works
 
 const strip = (id: string) => id.replace(/-/g, '');
 
-let cached: Promise<string[]> | null = null;
+// Cache only a SUCCESSFUL non-empty result. A transient failure must not be
+// memoised, or one flaky notion.so read early in a build poisons every later
+// getStaticProps in the same process and silently reverts the whole site to the
+// official query order.
+let cached: string[] | null = null;
+let inflight: Promise<string[]> | null = null;
 
 /** Row ids (dash-stripped) in the database's default view order; [] on failure. */
-export function getViewOrder(databaseId: string): Promise<string[]> {
-  if (!cached) {
-    cached = fetchOrder(databaseId).catch((e) => {
-      console.warn('[notion] view-order fetch failed, using API order:', e?.message ?? e);
-      return [];
-    });
+export async function getViewOrder(databaseId: string): Promise<string[]> {
+  if (cached) return cached;
+  if (!inflight) {
+    inflight = fetchOrder(databaseId)
+      .then((ids) => {
+        if (ids.length) cached = ids; // only a real answer sticks
+        else console.warn('[notion] view-order: published DB but no ordered ids found');
+        return ids;
+      })
+      .catch((e) => {
+        console.warn('[notion] view-order fetch failed, using API order:', e?.message ?? e);
+        return [];
+      })
+      .finally(() => {
+        inflight = null; // let the next page retry if this one failed
+      });
   }
-  return cached;
+  return inflight;
 }
 
 async function fetchOrder(databaseId: string): Promise<string[]> {

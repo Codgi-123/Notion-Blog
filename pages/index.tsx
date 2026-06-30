@@ -65,8 +65,8 @@ export default function Home({ posts, menus, notices, site, sections }: HomeProp
     <Layout menus={menus} notices={notices} site={site} searchPosts={posts}>
       {/* Hero */}
       <header className="hero">
-        <h1 className="hero-line" data-split>{blogConfig.hero.line1}</h1>
-        <h1 className="hero-line hero-italic" data-split>{blogConfig.hero.line2}</h1>
+        <h1 className="hero-line" data-split>{site?.hero.line1 ?? blogConfig.hero.line1}</h1>
+        <h1 className="hero-line hero-italic" data-split>{site?.hero.line2 ?? blogConfig.hero.line2}</h1>
         <div className="hero-meta">
           <p className="hero-desc">
             {site?.bio || site?.description || blogConfig.description}

@@ -370,6 +370,10 @@ export async function getSiteConfig(): Promise<SiteConfig> {
     favicon: g('BLOG_FAVICON'),
     bio: g('BIO'),
     globalCss: g('GLOBAL_CSS'),
+    hero: {
+      line1: g('HERO_LINE1') ?? blogConfig.hero.line1,
+      line2: g('HERO_LINE2') ?? blogConfig.hero.line2,
+    },
   };
 }
 

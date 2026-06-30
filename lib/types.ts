@@ -30,6 +30,7 @@ export interface SiteConfig {
   favicon: string | null;
   bio: string | null;
   globalCss: string | null;
+  hero: { line1: string; line2: string };
 }
 
 // A navigation entry built from Menu/SubMenu rows.
