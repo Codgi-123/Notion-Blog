@@ -6,6 +6,7 @@
 // snapshot below; reordering in Notion takes effect on the next deploy.
 
 import snapshot from './menu-order.json';
+import blogConfig from '../blog.config';
 
 const strip = (id: string) => id.replace(/-/g, '');
 
@@ -39,6 +40,10 @@ export async function fetchViewOrder(databaseId: string): Promise<string[]> {
   const authToken = process.env.NOTION_TOKEN_V2;
   const activeUser = process.env.NOTION_ACTIVE_USER;
 
+  const pinned: string | undefined = blogConfig.orderViewId;
+  const blockIdsOf = (v: any): string[] =>
+    v?.blockIds ?? v?.collection_group_results?.blockIds ?? [];
+
   const once = async (): Promise<string[]> => {
     const api = new NotionAPI(authToken ? { authToken, activeUser } : {});
     const recordMap: any = await api.getPage(databaseId);
@@ -46,10 +51,19 @@ export async function fetchViewOrder(databaseId: string): Promise<string[]> {
     // recordMap shape has shifted across Notion versions; accept either layout.
     for (const collectionId of Object.keys(cq)) {
       const views = cq[collectionId] ?? {};
-      for (const viewId of Object.keys(views)) {
-        const v = views[viewId];
-        const ids: string[] = v?.blockIds ?? v?.collection_group_results?.blockIds ?? [];
+      // A DB has several views, each with its own drag-sort; the API lists them
+      // in NO stable order. Pin the exact view (blogConfig.orderViewId) so local
+      // and Vercel builds always read the same one — otherwise the snapshot is a
+      // coin flip. Only fall back to "first non-empty view" if none is pinned.
+      if (pinned && views[pinned]) {
+        const ids = blockIdsOf(views[pinned]);
         if (ids.length) return ids.map(strip);
+      }
+      if (!pinned) {
+        for (const viewId of Object.keys(views)) {
+          const ids = blockIdsOf(views[viewId]);
+          if (ids.length) return ids.map(strip);
+        }
       }
     }
     return [];

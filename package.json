@@ -7,6 +7,7 @@
     "prebuild": "tsx scripts/snapshot-order.ts || true",
     "build": "next build",
     "snapshot:order": "tsx scripts/snapshot-order.ts",
+    "notion:views": "tsx scripts/notion-views.ts",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
