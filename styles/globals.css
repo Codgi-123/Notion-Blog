@@ -338,6 +338,9 @@ html[data-theme='dark'] .fx-bg {
   position: relative;
 }
 .nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font: 400 13px/1 var(--font-sans);
   cursor: pointer;
   opacity: 0.55;
@@ -373,7 +376,7 @@ html[data-theme='dark'] .fx-bg {
   height: 10px;
 }
 .nav-dropdown-menu .nav-link {
-  display: block;
+  display: flex;
   padding: 8px 16px;
 }
 .icon-btn {

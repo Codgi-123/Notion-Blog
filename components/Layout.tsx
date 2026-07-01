@@ -24,7 +24,8 @@ function NavLink({ item }: { item: MenuItem }) {
     return (
       <div className="nav-item nav-dropdown">
         <span className="nav-link">
-          {item.icon && <i className={item.icon} />} {item.title}
+          {item.icon && <i className={item.icon} />}
+          {item.title}
         </span>
         <div className="nav-dropdown-menu">
           {item.children.map((c) => (
@@ -40,7 +41,8 @@ function NavLink({ item }: { item: MenuItem }) {
       className="nav-link"
       {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
     >
-      {item.icon && <i className={item.icon} />} {item.title}
+      {item.icon && <i className={item.icon} />}
+      {item.title}
     </Link>
   );
 }

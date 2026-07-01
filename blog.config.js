@@ -65,7 +65,8 @@ module.exports = {
   //   Menu    -> top-level nav item (slug = target; may be external)
   //   SubMenu -> dropdown child of the Menu directly above it
   //   Notice  -> site-wide announcement
-  //   Config  -> reserved for Notion-driven site config (not yet wired up)
+  //   Config  -> Notion-driven site config, overrides blog.config.js at runtime
+  //              (see configTable above + getSiteConfig); ~60s, no redeploy
   types: {
     post: 'Post',
     page: 'Page',
