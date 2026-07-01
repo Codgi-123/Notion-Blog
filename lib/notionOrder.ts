@@ -40,33 +40,42 @@ export async function fetchViewOrder(databaseId: string): Promise<string[]> {
   const authToken = process.env.NOTION_TOKEN_V2;
   const activeUser = process.env.NOTION_ACTIVE_USER;
 
-  const pinned: string | undefined = blogConfig.orderViewId;
+  const wantName: string | undefined = blogConfig.orderViewName;
   const blockIdsOf = (v: any): string[] =>
     v?.blockIds ?? v?.collection_group_results?.blockIds ?? [];
 
+  // A DB has several views (Table/Board/Gallery…), each with its own drag-sort,
+  // and the API lists them in NO stable order — so we must select a specific one
+  // or the snapshot is a coin flip. getPage doesn't hydrate view names, so resolve
+  // them via syncRecordValues and pick the view whose name matches config.
+  const resolveViewIdByName = async (api: any, viewIds: string[]): Promise<string | undefined> => {
+    if (!wantName) return undefined;
+    const res: any = await api.fetch({
+      endpoint: 'syncRecordValues',
+      body: { requests: viewIds.map((id) => ({ pointer: { table: 'collection_view', id }, version: -1 })) },
+    });
+    const recs = res?.recordMap?.collection_view ?? res?.recordMapWithRoles?.collection_view ?? {};
+    return viewIds.find((id) => {
+      const v = recs[id]?.value?.value ?? recs[id]?.value;
+      return v?.name === wantName;
+    });
+  };
+
   const once = async (): Promise<string[]> => {
-    const api = new NotionAPI(authToken ? { authToken, activeUser } : {});
+    const api: any = new NotionAPI(authToken ? { authToken, activeUser } : {});
     const recordMap: any = await api.getPage(databaseId);
     const cq = recordMap?.collection_query ?? {};
-    // recordMap shape has shifted across Notion versions; accept either layout.
-    for (const collectionId of Object.keys(cq)) {
-      const views = cq[collectionId] ?? {};
-      // A DB has several views, each with its own drag-sort; the API lists them
-      // in NO stable order. Pin the exact view (blogConfig.orderViewId) so local
-      // and Vercel builds always read the same one — otherwise the snapshot is a
-      // coin flip. Only fall back to "first non-empty view" if none is pinned.
-      if (pinned && views[pinned]) {
-        const ids = blockIdsOf(views[pinned]);
-        if (ids.length) return ids.map(strip);
-      }
-      if (!pinned) {
-        for (const viewId of Object.keys(views)) {
-          const ids = blockIdsOf(views[viewId]);
-          if (ids.length) return ids.map(strip);
-        }
-      }
+    const collectionId = Object.keys(cq)[0];
+    if (!collectionId) return [];
+    const views = cq[collectionId] ?? {};
+    const viewIds = Object.keys(views);
+
+    const named = await resolveViewIdByName(api, viewIds);
+    if (wantName && !named) {
+      console.warn(`[notion] no view named "${wantName}" — falling back to first view`);
     }
-    return [];
+    const chosen = named && views[named] ? named : viewIds[0];
+    return blockIdsOf(views[chosen]).map(strip);
   };
 
   const ATTEMPTS = 3;

@@ -17,11 +17,11 @@ module.exports = {
   revalidate: 60,
 
   // Which Notion database VIEW defines the row order (menu grouping, etc.).
-  // A database can have several views, each with its own manual drag-sort; the
-  // private API returns them in no guaranteed order, so we must pin the exact
-  // one. This is the view you drag rows in. Find ids via `npm run notion:views`.
-  // Empty = use whatever view the API lists first (non-deterministic — avoid).
-  orderViewId: '260687f2-b6dd-81cd-88ae-000c5c0c5458',
+  // A database has several views (Table/Board/Gallery…), each with its own manual
+  // drag-sort, and the private API lists them in no guaranteed order — so we pick
+  // one BY NAME (as shown on its tab in Notion). This is the view you drag rows in.
+  // Run `npm run notion:views` to list names. Empty = first view (avoid: unstable).
+  orderViewName: 'Table',
 
   // URL prefix for articles (notion-next uses /article/[slug]).
   articlePrefix: 'article',
