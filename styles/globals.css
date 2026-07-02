@@ -336,6 +336,11 @@ html[data-theme='dark'] .fx-bg {
 }
 .nav-item {
   position: relative;
+  /* The dropdown wrapper is an extra block around .nav-link; without this its
+     span sits on the block's (inherited, tall) line-box baseline and drops below
+     the sibling <a> items. Flex-center it so it aligns like the plain links. */
+  display: flex;
+  align-items: center;
 }
 .nav-link {
   display: inline-flex;
