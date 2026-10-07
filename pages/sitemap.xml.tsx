@@ -23,6 +23,7 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
 
   const urls = [
     url('/'),
+    url('/archive'),
     url('/category'),
     url('/tag'),
     ...posts.map((p) => url(`/${blogConfig.articlePrefix}/${p.slug}`, p.date)),
